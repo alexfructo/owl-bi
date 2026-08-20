@@ -42,6 +42,15 @@ A Streamlit app — either uploaded as a `.py` file or written in-platform via
 an editor. Each dashboard runs as its own isolated process, on its own
 port. The main application acts as a reverse proxy in front of all of them.
 
+**App** *(new — see `docs/product-scope.md` "Decisions made this session")*
+The published, viewer-facing counterpart to a workspace: editors work in
+the workspace, but what viewers and embeds see is whatever was last
+published as the app, not necessarily the current state of the edit. This
+mirrors Power BI's workspace/app split, deliberately added so an in-progress
+edit can't break production viewers. Not designed yet — what exactly gets
+versioned/promoted (the dashboard file, a git ref, a server-side snapshot)
+is an open question, see §8.
+
 **Dataset**
 Originally scoped like Power BI's import vs. DirectQuery model. In practice
 it evolved into something simpler: a data connection consumed by a
@@ -100,6 +109,14 @@ FastAPI acts as reverse proxy for `/dashboard/{id}/*` → `localhost:{port}`.
 Must handle WebSocket upgrade, not just plain HTTP — Streamlit relies on WS
 for session state, and this is typically the trickiest part to get right
 in a hand-rolled proxy.
+
+**Usage metrics & audit logging** *(decided in `docs/product-scope.md`)*:
+instrument this at the proxy when it's built, not bolted on later — it's
+the one place all dashboard traffic already passes through, so logging
+`(dashboard_id, viewer, workspace, timestamp)` per request is nearly free
+here and expensive to retrofit. Admin-action audit logging (workspace
+created, permissions changed, dataset registered) belongs at the FastAPI
+core layer for the same reason. Log schema/storage still undecided, see §8.
 
 ### 4.3 RLS & the dataset problem
 
@@ -199,6 +216,18 @@ Explicitly out of scope for now, to avoid Power-BI-style scope creep:
   lives in dashboard code and/or the dataset layer
 - No attempt to match Power BI's visual customization depth as a v1 goal
 
+These two bullets were the *only* product-scope decisions on record until
+this session — everything else about "which Power BI features does Owl BI
+cover" was implicit. See
+[`docs/product-scope.md`](product-scope.md) for the full feature-by-feature
+pass against Power BI and this session's decisions, including three real
+scope additions that aren't reflected elsewhere in this doc yet:
+- **Apps** (published view, separate from the edit workspace) — see §3
+- **Usage metrics & audit logging**, instrumented at the proxy/core as
+  they're built — see §4.2
+- **In-platform deployment promotion** (dev/test/prod inside Owl BI, not
+  left to git) — not designed yet, see §8
+
 ## 8. Open questions / not yet decided
 
 - [x] Exact shape of the dataset service API — MVP implemented in
@@ -223,14 +252,33 @@ Explicitly out of scope for now, to avoid Power-BI-style scope creep:
       orchestration) — deferred, not a current blocker
 - [ ] Contribution workflow / `CONTRIBUTING.md` — planned for first public
       release, not written yet
+- [ ] **App publish model** *(new)* — what gets versioned/promoted when a
+      workspace editor publishes: the dashboard file, a git ref, a
+      server-side snapshot? See `docs/product-scope.md`.
+- [ ] **In-platform promotion feature** *(new)* — environments per
+      workspace or per dashboard? Who can promote? Does promoting a
+      dashboard also promote the dataset config it depends on? Scoped in,
+      not designed — see `docs/product-scope.md`.
+- [ ] **Usage/audit log schema & storage** *(new)* — what gets captured
+      per request (dashboard id, viewer, workspace, timestamp, RLS filter
+      values applied?) and where it's queried from. See
+      `docs/product-scope.md`.
+- [ ] **Data alerts & subscriptions** *(new, low priority)* — logged as
+      "maybe later," not committed. Would need headless rendering of a
+      live Streamlit app plus a threshold-evaluation engine. See
+      `docs/product-scope.md`.
 
 ## 9. Suggested next steps (code)
 
 Candidates discussed for "what to build first":
-- Dataset service module (FastAPI + centralized RLS)
-- Subprocess/dashboard lifecycle manager + proxy
-- Repo scaffolding (folder structure, docker-compose, config)
-- SDK the dashboards will import to call the dataset service
-
-No decision made yet on ordering — to be picked up in the next working
-session.
+- ~~Dataset service module (FastAPI + centralized RLS)~~ — MVP built, see
+  `src/owl_bi/datasets/` and `examples/toy_dashboard/`
+- ~~SDK the dashboards will import to call the dataset service~~ — MVP
+  built, see `src/owl_bi/sdk/`
+- ~~Repo scaffolding (folder structure, docker-compose, config)~~ — done
+  for the backend; frontend scaffolding still pending
+- Subprocess/dashboard lifecycle manager + proxy — next up, per the
+  ordering agreed on and executed this session
+- Design pass for the App publish model + in-platform promotion feature
+  (new scope from `docs/product-scope.md`) — needed before either gets
+  built, not yet scheduled relative to the lifecycle manager

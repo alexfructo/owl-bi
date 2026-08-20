@@ -4,9 +4,12 @@
 scope — a platform to publish, control access to, and embed dashboards
 built as Streamlit apps (Python + Streamlit + Plotly). Not a visual
 report builder, not a data modeling layer. See [`README.md`](README.md)
-for the pitch and [`docs/architecture.md`](docs/architecture.md) for the
+for the pitch, [`docs/architecture.md`](docs/architecture.md) for the
 full design notes (roles, dashboard lifecycle, RLS/dataset service,
-open questions).
+open questions), and [`docs/product-scope.md`](docs/product-scope.md)
+for the feature-by-feature comparison against Power BI (what's in scope,
+deferred, or explicitly out — read this before assuming a Power BI
+feature is or isn't wanted here).
 
 **Status as of 2026-08-20:** brainstorm / early exploration. The repo has
 no application code yet — only the pitch and architecture notes. Nothing

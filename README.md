@@ -35,6 +35,10 @@ a data modeling layer. If you want that, use Metabase/Superset/Power BI.
 Owl BI is for teams that are already writing dashboards in Python and just
 need somewhere real to put them.
 
+See [`docs/product-scope.md`](docs/product-scope.md) for the full,
+feature-by-feature comparison against Power BI — what's in, what's
+deferred, and what's deliberately out.
+
 ## Feature comparison
 
 | | Owl BI | Power BI | Metabase / Superset | Posit Connect |
@@ -111,6 +115,9 @@ pytest
 - [x] SDK for dashboards to call the dataset service — MVP
 - [ ] Workspace & role-based access control
 - [ ] Token-based embed with RLS
+- [ ] Apps — published view, separate from the edit workspace
+- [ ] Usage metrics & audit logging (instrumented at the proxy/core as they're built)
+- [ ] In-platform deployment promotion (dev/test/prod)
 - [ ] React frontend
 - [ ] i18n support (translation keys from day one)
 - [ ] `CONTRIBUTING.md` and first public release

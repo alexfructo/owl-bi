@@ -1,6 +1,8 @@
 # Owl BI — Product Scope vs. Power BI
 
-**Status:** first deliberate pass at product scope. Until this doc,
+**Status:** first deliberate pass at product scope, now with a second
+completeness pass (same session) covering categories the first pass
+missed entirely — see "Completeness pass" below. Until this doc,
 `docs/architecture.md` §7 only had two negative guardrails ("no visual
 builder", "no DAX-equivalent modeling") — that's a perimeter, not a
 product definition. Architecture decisions (subprocess isolation,
@@ -25,13 +27,26 @@ Power BI's feature set was pulled from current docs/community sources
 | **Apps** — published view, separate from the edit workspace | ✅ **new** | Decided this session. Power BI separates the workspace people edit in from the "app" consumers see, so an in-progress edit doesn't break production viewers. Owl BI didn't have this distinction. See "Decisions made this session" below — needs its own design pass before it's built. |
 | Embedding via token, params as RLS filters | ✅ | Existing — core pitch |
 | Row-level security | ✅ | Existing — core pitch, see architecture.md §4.3 |
+| Branding/white-label of the platform chrome (logo, colors) | 🕓 | Minor, low priority. Self-hosters will likely want this eventually; not core to the publishing pitch. |
 
-## Access & collaboration
+## Content discovery & trust
+
+Not covered anywhere before this pass — Power BI has a whole layer for
+"find content you have or don't have access to" that Owl BI has no story
+for yet.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Role-based access (Admin/Editor/Viewer at workspace level) | ✅ | Existing, matches Power BI's Admin/Member/Contributor/Viewer split closely enough |
-| Comments on reports | 🕓 | Not core to the publishing-infra pitch; revisit if requested |
+| Search / home page listing dashboards you have access to, across workspaces | 🕓 | Genuine gap — nothing today says how a viewer finds what they can see once there's more than a couple of workspaces. Not glamorous, but arguably needed even at v1 scale, unlike most items in this doc. Worth revisiting sooner than the 🕓 label implies. |
+| Favorites / recently viewed | 🕓 | Minor, personal-productivity feature — low priority |
+| Endorsement / certification badges (Power BI's "promoted" vs. "certified" content) | 🕓 | Trust signal for governance at scale. Not urgent while workspace/role access control already gates who sees what; revisit if content volume makes "which dashboard is the real one" a real problem. |
+| Discoverability of content you don't have access to (request-access flow) | 🕓 | Bundled with search above — same open question, not designed |
+
+## Automation & APIs
+
+| Feature | Status | Notes |
+|---|---|---|
+| Management/automation REST API (provision workspaces, dashboards, roles, datasets programmatically — e.g. from CI/CD or Terraform-style tooling) | 🕓 | Distinct from the internal dataset-query API already built (`src/owl_bi/datasets/api.py`), which exists only for dashboards to fetch RLS-filtered data. Some backend for the web UI to call will exist regardless; whether it's stabilized and documented as a *public* automation API is a separate, undecided question. |
 
 ## Data refresh & connectivity
 
@@ -40,6 +55,8 @@ Power BI's feature set was pulled from current docs/community sources
 | Scheduled dataset refresh | N/A | Doesn't map 1:1 — Streamlit fetches on demand, so "refresh" is whatever cadence the dashboard's own code chooses. The dataset service's planned response cache (architecture.md §4.3) is the closest analog, and it's already ✅ in scope. |
 | Dataflows (reusable prep pipelines) | ❌ | This *is* the data modeling layer — excluded by the existing §7 guardrail |
 | On-premises data gateway | 🕓 | Only matters once a real data source sits behind a firewall the dataset service can't reach directly. Might not need a dedicated gateway concept at all — "wherever the dataset service is hosted" may already solve it. Revisit if it comes up for real. |
+| Real-time streaming / push datasets (live-updating tiles, not page-load queries) | 🕓 | Genuinely different shape from the pull/on-demand model already decided (dataset service answers a query when a dashboard asks). Continuous push would need its own delivery mechanism (websocket fan-out, a streaming buffer) — not a small extension of the current design. Low priority until a real use case shows up. |
+| Shared/reusable datasets across many dashboards | ✅ implicit | Already how the dataset service works — register a dataset once, any dashboard can query it (subject to its own filter whitelist). No extra feature needed; this is what Power BI calls a "certified shared dataset," Owl BI gets it for free from the architecture. |
 
 ## Interactivity & report features
 
@@ -48,6 +65,19 @@ Power BI's feature set was pulled from current docs/community sources
 | Bookmarks, drillthrough | ❌ | These are report-authoring features. In Owl BI a dashboard is Streamlit code, so navigation/interactivity is the dashboard author's job, not the platform's — consistent with "dashboards are Streamlit code" |
 | Q&A / natural language query / Copilot | ❌ | Squarely inside the "no DAX-equivalent modeling / no BI magic" guardrail. Worth noting Power BI's own Q&A is being retired in favor of Copilot (Dec 2026) — not a feature worth chasing even on Power BI's own roadmap. |
 | Mobile-optimized layout | 🕓 | Streamlit has some responsiveness already; platform's job is mostly "don't break it in the proxy," not a dedicated mobile feature |
+| Custom visuals / visual marketplace | ✅ implicit | Already solved by construction — a dashboard is Plotly/any-Python-plotting-library code, so there's no marketplace to build; every visual Python can produce is already "supported." |
+| Multi-source dashboards (one dashboard querying several datasets) | ✅ implicit | Already just code — a dashboard calls the SDK against however many `dataset_id`s it needs. No "composite model" feature required, unlike Power BI where this is a first-class modeling concept. |
+
+## Export & offline access
+
+Missing from the first pass entirely, despite being flagged in chat —
+adding it properly here.
+
+| Feature | Status | Notes |
+|---|---|---|
+| Raw data export (CSV/Excel) from within a dashboard | ✅ implicit | Already available to any dashboard author via `st.download_button` — dashboard-code responsibility, not a platform feature, consistent with "dashboards are Streamlit code" |
+| Whole-dashboard export/snapshot (render the live app to a static PDF/image) | 🕓 | Real gap, distinct from raw data export — would need the same headless-rendering capability as alerts/subscriptions above. Bundle with that "maybe later" bucket rather than deciding separately. |
+| Paginated / pixel-perfect reports (Power BI Report Builder / legacy SSRS model) | ❌ | Not a fit for a Streamlit-based platform at all — pixel-perfect fixed-layout printing is a fundamentally different rendering model. Not worth building even long-term. |
 
 ## Alerts & delivery
 
@@ -70,6 +100,17 @@ Power BI's feature set was pulled from current docs/community sources
 | Audit log (workspace created, permissions changed, dataset registered, etc.) | ✅ **new** | Same reasoning — log at the FastAPI core as actions happen, not bolted on after the fact. |
 | Tenant-wide admin settings/portal | 🕓 | Deferred until there's more than a couple of settings to actually administer |
 | Capacity management (Premium-style compute tiers) | ❌ | Doesn't apply to a self-hosted open source model — whoever runs Owl BI owns the hardware. Per-dashboard resource limits (cgroups/ulimit, architecture.md §4.1) already cover "don't let one dashboard take down the host"; there's no capacity *product* to build on top of that. |
+| Sensitivity labels / data classification / lineage & impact analysis (which dashboards depend on this dataset, before I change it) | 🕓 | Enterprise governance feature. A cheap version — "list dashboards that reference dataset X" — becomes easy once dataset configs live in real storage instead of code (see `DatasetRegistry` in `src/owl_bi/datasets/registry.py`, currently in-memory only). Not needed yet, worth remembering once that registry gets a real backing store. |
+
+**Multi-tenant hosted Owl BI vs. self-hosted single-tenant**: everything
+in this doc assumes Owl BI is self-hosted by the team that uses it — the
+usual open source model. If someone wanted to run Owl BI itself as a
+hosted service *for other people* (an Owl-BI-as-a-SaaS business), that's
+a distinct product shape nothing here is designed for, and it sharpens an
+already-known gap: the internal dataset-service token is a single
+shared secret today (architecture.md §8), fine for one trusted deployment,
+not for isolating unrelated tenants from each other. Not a current
+priority — flagged so it isn't rediscovered as a surprise later.
 
 ## AI features
 
@@ -100,11 +141,24 @@ just a different business model (self-hosted, open source).
    who can promote, what exactly gets promoted) before any code gets
    written for it.
 
+## Completeness pass (round 2, same session)
+
+The first pass missed whole categories: content discovery/trust,
+automation APIs, real-time streaming, and export — added above. No new
+scope *decisions* came out of this round, just gaps that needed a status
+(mostly 🕓, a couple of ✅-implicit confirmations that no new feature is
+actually needed, and one clean ❌ for paginated reports). The one thing
+worth calling out: **version history / rollback of a published
+dashboard** isn't a separate line item — it's the same problem as the App
+publish model below, not a new one, so it's not listed twice.
+
 ## New open questions (companions to architecture.md §8)
 
 - **App publish model**: what gets versioned/promoted when a workspace
   editor "publishes" — the dashboard file itself? A pointer to a git ref?
-  A full snapshot copied server-side? Undecided.
+  A full snapshot copied server-side? Undecided. Whatever the answer,
+  it's also what enables rollback to a previous published version — that
+  falls out of this decision rather than needing its own design.
 - **In-platform promotion feature**: environments per workspace or per
   dashboard? Who has permission to promote? Does promoting a dashboard
   also promote the dataset config it depends on? Undecided — flagged as

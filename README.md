@@ -92,16 +92,23 @@ undecided.
 
 ## Quick start
 
-Coming soon — there's no runnable code yet. This section will show
-`docker compose up` / `pip install owl-bi` once the first slice
-(dataset service + subprocess lifecycle manager) exists.
+There's no installable package yet, but the dataset service MVP is
+runnable — see [`examples/toy_dashboard/README.md`](examples/toy_dashboard/README.md)
+for a real (if manual) end-to-end walkthrough: a Streamlit dashboard
+calling the dataset service, RLS-filtered by region, with no subprocess
+lifecycle manager or reverse proxy in front of it yet.
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
 
 ## Roadmap
 
-- [ ] Repo scaffolding (folder structure, docker-compose, config)
-- [ ] Dataset service module (FastAPI + centralized RLS)
+- [x] Repo scaffolding (folder structure, docker-compose, config) — backend only so far, no frontend scaffolding yet
+- [x] Dataset service module (FastAPI + centralized RLS) — MVP: equality filters against a whitelist, no caching yet
 - [ ] Subprocess/dashboard lifecycle manager + reverse proxy
-- [ ] SDK for dashboards to call the dataset service
+- [x] SDK for dashboards to call the dataset service — MVP
 - [ ] Workspace & role-based access control
 - [ ] Token-based embed with RLS
 - [ ] React frontend

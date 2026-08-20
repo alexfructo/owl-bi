@@ -1,0 +1,12 @@
+# Minimal scaffolding: brings up the core API alone, with an empty dataset
+# registry (see owl_bi/app.py) — no datasets are registered yet, since
+# there's no admin API or persistent config store for them (open question,
+# docs/architecture.md §8). Useful to confirm the image builds and boots;
+# not a full local-dev stack yet.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OWL_BI_INTERNAL_TOKEN=${OWL_BI_INTERNAL_TOKEN:-dev-token}

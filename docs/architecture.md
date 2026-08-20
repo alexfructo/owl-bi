@@ -201,12 +201,22 @@ Explicitly out of scope for now, to avoid Power-BI-style scope creep:
 
 ## 8. Open questions / not yet decided
 
+- [x] Exact shape of the dataset service API — MVP implemented in
+      `src/owl_bi/datasets/`: `POST /internal/datasets/{id}/query` takes
+      `{filters, limit}`, returns `{rows}`. Filters are equality-only,
+      restricted to a per-dataset column whitelist (`DatasetConfig.
+      allowed_filters`) — no free-form SQL or operators from the caller.
+      Still open: cache key design (§4.3's `(dataset_id, hash of RLS
+      filters)` idea isn't built yet), and whether equality-only filters
+      stay sufficient once real dashboards need ranges/IN-lists.
 - [ ] License choice (MIT/Apache vs AGPL)
-- [ ] Exact shape of the dataset service API
-      (`POST /internal/datasets/{id}/query` contract, RLS filter schema,
-      cache key design)
-- [ ] Auth mechanism between subprocess and FastAPI core (internal token
-      via env var, proposed but not implemented)
+- [x] Auth mechanism between subprocess and FastAPI core — implemented as
+      proposed: a single shared-secret bearer token via
+      `OWL_BI_INTERNAL_TOKEN`. Known limitation, not yet addressed: any
+      caller with the token can query any registered dataset, subject
+      only to that dataset's filter whitelist — fine while the caller is
+      a trusted subprocess on the same host, revisit before multi-tenant
+      hosting.
 - [ ] Whether/when Docker becomes necessary (currently: only if isolating
       untrusted code becomes a requirement)
 - [ ] Multi-instance FastAPI story (sticky routing vs. container

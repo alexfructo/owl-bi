@@ -5,7 +5,7 @@
 
 ![status](https://img.shields.io/badge/status-pre--alpha-lightgrey)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
-![license](https://img.shields.io/badge/license-TBD-lightgrey)
+![license](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)
 
 > **Note:** Owl BI is in the design/brainstorm stage — see
 > [`docs/architecture.md`](docs/architecture.md) for the full notes. This
@@ -115,9 +115,8 @@ pytest
 - [x] SDK for dashboards to call the dataset service — MVP
 - [ ] Workspace & role-based access control
 - [ ] Token-based embed with RLS
-- [ ] Apps — published view, separate from the edit workspace
+- [ ] Apps — published view, separate from the edit workspace (publishing points at a git ref, not an in-platform staging feature)
 - [ ] Usage metrics & audit logging (instrumented at the proxy/core as they're built)
-- [ ] In-platform deployment promotion (dev/test/prod)
 - [ ] React frontend
 - [ ] i18n support (translation keys from day one)
 - [ ] `CONTRIBUTING.md` and first public release
@@ -139,8 +138,10 @@ locales are welcome once the contribution workflow opens.
 
 ## License
 
-Not yet decided. Under consideration: MIT/Apache 2.0 (broad adoption) vs.
-AGPL (open-core model, forces hosted forks to stay open).
+[GNU AGPL-3.0-or-later](LICENSE). Chosen deliberately over MIT/Apache:
+Owl BI is infrastructure people run as a service, and the AGPL's
+network-use clause is what keeps a hosted, modified fork from staying
+closed. See `docs/architecture.md` §6 for the reasoning.
 
 ## Contributing
 

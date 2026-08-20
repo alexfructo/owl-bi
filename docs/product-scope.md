@@ -1,8 +1,10 @@
 # Owl BI — Product Scope vs. Power BI
 
-**Status:** first deliberate pass at product scope, now with a second
-completeness pass (same session) covering categories the first pass
-missed entirely — see "Completeness pass" below. Until this doc,
+**Status:** first deliberate pass at product scope, with a second
+completeness pass covering categories the first pass missed (see
+"Completeness pass" below), and a round-3 revision that closed the
+license decision and reversed the in-platform promotion call (see
+"Round 3" below). Until this doc,
 `docs/architecture.md` §7 only had two negative guardrails ("no visual
 builder", "no DAX-equivalent modeling") — that's a perimeter, not a
 product definition. Architecture decisions (subprocess isolation,
@@ -90,7 +92,7 @@ adding it properly here.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Deployment pipelines (promote a dashboard dev → test → prod) | ✅ **new, in-platform** | Decided this session: build this *inside* Owl BI, not left to git branches/PRs outside the platform. This is a real scope addition, not yet designed — see open questions below. |
+| Deployment pipelines (promote a dashboard dev → test → prod) | ❌ **revised** | Originally decided in-platform; reversed after a "how would Linus Torvalds see this" review flagged it as reinventing what `git` already does for free (branch/PR/merge). No in-platform staging UI — promotion is a branch/PR workflow outside the platform. See "Decisions made this session" below. |
 
 ## Governance & admin
 
@@ -135,11 +137,9 @@ just a different business model (self-hosted, open source).
 3. **Alerts & subscriptions** — kept open as "maybe later," not committed
    either way. Requires headless-rendering infrastructure Owl BI has no
    other reason to build yet.
-4. **Deployment pipelines** — build an in-platform dev/test/prod promotion
-   feature, rather than relying on git alone. This is a genuine scope
-   addition; it needs its own design pass (data model for environments,
-   who can promote, what exactly gets promoted) before any code gets
-   written for it.
+4. ~~Deployment pipelines — build an in-platform dev/test/prod promotion
+   feature, rather than relying on git alone.~~ **Reversed in round 3**,
+   see below.
 
 ## Completeness pass (round 2, same session)
 
@@ -152,17 +152,33 @@ worth calling out: **version history / rollback of a published
 dashboard** isn't a separate line item — it's the same problem as the App
 publish model below, not a new one, so it's not listed twice.
 
+## Round 3: license decided, promotion decision reversed
+
+Prompted by a "how would Linus Torvalds and Richard Stallman look at this
+project" review (see chat history — not reproduced here, the point is the
+conclusions):
+
+- **License**: closed. AGPL-3.0-or-later — see `LICENSE` and
+  architecture.md §6. Was flagged as a decision being made *by omission*
+  by leaving it "TBD"; Owl BI's own pitch (infrastructure people run as a
+  service) is close to the textbook case the AGPL's network-use clause
+  exists for.
+- **Deployment pipelines: reversed.** Round-1 decided an in-platform
+  dev/test/prod promotion feature. On reflection that was reinventing
+  what `git` already does — a dashboard is a `.py` file, "promote to
+  prod" is a merge. No in-platform staging UI gets built. This also
+  collapses the "App publish model" open question below: publishing an
+  App now just means pointing it at a git ref (branch or tag), not
+  designing a bespoke versioning/snapshot mechanism.
+
 ## New open questions (companions to architecture.md §8)
 
-- **App publish model**: what gets versioned/promoted when a workspace
-  editor "publishes" — the dashboard file itself? A pointer to a git ref?
-  A full snapshot copied server-side? Undecided. Whatever the answer,
-  it's also what enables rollback to a previous published version — that
-  falls out of this decision rather than needing its own design.
-- **In-platform promotion feature**: environments per workspace or per
-  dashboard? Who has permission to promote? Does promoting a dashboard
-  also promote the dataset config it depends on? Undecided — flagged as
-  in-scope, not yet designed.
+- **App publish model**: now scoped down by the round-3 reversal above —
+  an App points at a git ref (branch/tag) rather than a platform-managed
+  snapshot. Still undecided: which ref convention (e.g. a `published`
+  branch per dashboard? a tag the editor pushes?), what triggers the
+  platform to notice a new ref exists (webhook vs. poll), and who's
+  authorized to move it. Smaller question than before, but not zero.
 - **Usage/audit log schema**: what exactly gets captured per
   request — dashboard id, viewer, workspace, timestamp, and (for RLS
   auditing purposes) the filter values applied? Where does it get stored

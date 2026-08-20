@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Wires up the Owl BI core app with one real dataset, for the walking-skeleton demo.
 
 This is deliberately kept out of `owl_bi.app`, which stays generic — this

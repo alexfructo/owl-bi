@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Creates a small sqlite database to back the toy "sales" dataset.
 
 Run once before starting the server:

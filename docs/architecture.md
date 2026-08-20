@@ -205,8 +205,13 @@ clone."
 - Platform is being built i18n-ready from the start (translation keys, no
   hardcoded strings) — default language English, contributions for other
   locales welcome once the contribution workflow opens
-- License: not yet decided — MIT/Apache 2.0 (broad adoption) vs. AGPL
-  (open-core model, forces hosted forks to stay open) both on the table
+- License: **AGPL-3.0-or-later**, decided. Rationale: Owl BI's own pitch
+  (§5) is "publish infrastructure people will run as a service" — the
+  AGPL's network-use clause (§13 of the license) is what closes the exact
+  loophole that would otherwise let someone host a modified, closed fork
+  and never contribute anything back. MIT/Apache would have maximized
+  adoption but given that up for nothing in return. See `LICENSE` at the
+  repo root and the SPDX headers on source files.
 
 ## 7. Scope guardrails
 
@@ -222,11 +227,16 @@ cover" was implicit. See
 [`docs/product-scope.md`](product-scope.md) for the full feature-by-feature
 pass against Power BI and this session's decisions, including three real
 scope additions that aren't reflected elsewhere in this doc yet:
-- **Apps** (published view, separate from the edit workspace) — see §3
+- **Apps** (published view, separate from the edit workspace) — see §3.
+  Publishing an App means pointing it at a git ref, not a bespoke
+  versioning mechanism — see the next bullet.
 - **Usage metrics & audit logging**, instrumented at the proxy/core as
   they're built — see §4.2
-- **In-platform deployment promotion** (dev/test/prod inside Owl BI, not
-  left to git) — not designed yet, see §8
+
+A fourth item — an in-platform dev/test/prod promotion feature — was
+decided in the first pass and then reversed: it would have reinvented
+what `git` already does for a `.py` file (branch, PR, merge). See
+`docs/product-scope.md` "Round 3" for the full reasoning.
 
 ## 8. Open questions / not yet decided
 
@@ -238,7 +248,7 @@ scope additions that aren't reflected elsewhere in this doc yet:
       Still open: cache key design (§4.3's `(dataset_id, hash of RLS
       filters)` idea isn't built yet), and whether equality-only filters
       stay sufficient once real dashboards need ranges/IN-lists.
-- [ ] License choice (MIT/Apache vs AGPL)
+- [x] License choice — AGPL-3.0-or-later, see §6
 - [x] Auth mechanism between subprocess and FastAPI core — implemented as
       proposed: a single shared-secret bearer token via
       `OWL_BI_INTERNAL_TOKEN`. Known limitation, not yet addressed: any
@@ -252,13 +262,12 @@ scope additions that aren't reflected elsewhere in this doc yet:
       orchestration) — deferred, not a current blocker
 - [ ] Contribution workflow / `CONTRIBUTING.md` — planned for first public
       release, not written yet
-- [ ] **App publish model** *(new)* — what gets versioned/promoted when a
-      workspace editor publishes: the dashboard file, a git ref, a
-      server-side snapshot? See `docs/product-scope.md`.
-- [ ] **In-platform promotion feature** *(new)* — environments per
-      workspace or per dashboard? Who can promote? Does promoting a
-      dashboard also promote the dataset config it depends on? Scoped in,
-      not designed — see `docs/product-scope.md`.
+- [ ] **App publish model** *(revised)* — publishing an App points it at
+      a git ref (branch/tag), not a platform-managed snapshot (see
+      `docs/product-scope.md` "Round 3" — an earlier in-platform
+      promotion feature was decided, then reversed for reinventing git).
+      Still open: which ref convention, what triggers the platform to
+      notice a new ref, who's authorized to move it.
 - [ ] **Usage/audit log schema & storage** *(new)* — what gets captured
       per request (dashboard id, viewer, workspace, timestamp, RLS filter
       values applied?) and where it's queried from. See
@@ -279,6 +288,6 @@ Candidates discussed for "what to build first":
   for the backend; frontend scaffolding still pending
 - Subprocess/dashboard lifecycle manager + proxy — next up, per the
   ordering agreed on and executed this session
-- Design pass for the App publish model + in-platform promotion feature
-  (new scope from `docs/product-scope.md`) — needed before either gets
+- Design pass for the (now git-based) App publish model — smaller than
+  originally scoped after the round-3 reversal, still needed before it's
   built, not yet scheduled relative to the lifecycle manager

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Toy Streamlit dashboard — the walking skeleton.
 
 This is what a dashboard is meant to look like: it never touches a

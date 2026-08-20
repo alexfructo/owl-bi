@@ -3,6 +3,8 @@ name = "owl-bi"
 version = "0.1.0"
 description = "Publishing infrastructure for Streamlit dashboards — workspaces, role-based access, and token-based embeds with row-level security."
 readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110",

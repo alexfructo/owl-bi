@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tests for the problems named in docs/architecture.md §4.3.
 
 Each test maps to one problem the old dashboard-level RLS approach had:
